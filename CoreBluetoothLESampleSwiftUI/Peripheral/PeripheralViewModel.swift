@@ -10,12 +10,10 @@ import CoreBluetooth
 
 final class PeripheralViewModel: NSObject, ObservableObject {
     var peripheralManager: CBPeripheralManager!
-
     var transferCharacteristic: CBMutableCharacteristic?
     var connectedCentral: CBCentral?
     var dataToSend = Data()
     var sendDataIndex: Int = 0
-    
     @Published var textMessage = ""
     
     func setupPeripheralManager() {

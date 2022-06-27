@@ -10,16 +10,12 @@ import CoreBluetooth
 
 final class CentralViewModel: NSObject, ObservableObject {
     var centralManager: CBCentralManager!
-
     var discoveredPeripheral: CBPeripheral?
     var transferCharacteristic: CBCharacteristic?
     var writeIterationsComplete = 0
     var connectionIterationsComplete = 0
-    
     let defaultIterations = 5     // change this value based on test usecase
-    
     var data = Data()
-    
     @Published var textMessage = ""
     
     func setupCentralManager() {

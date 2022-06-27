@@ -61,7 +61,7 @@
 		CE86DEF7279E6DBE00BAE310 /* CoreBluetoothLESampleSwiftUI */ = {
 			isa = PBXGroup;
 			children = (
-				CE86DF09279E6EB400BAE310 /* DataStructure */,
+				CE86DF09279E6EB400BAE310 /* Model */,
 				CE86DF0E279E701400BAE310 /* Peripheral */,
 				CE86DF06279E6DE900BAE310 /* Central */,
 				CE86DEF8279E6DBE00BAE310 /* CoreBluetoothLESampleSwiftUIApp.swift */,
@@ -89,12 +89,12 @@
 			path = Central;
 			sourceTree = "<group>";
 		};
-		CE86DF09279E6EB400BAE310 /* DataStructure */ = {
+		CE86DF09279E6EB400BAE310 /* Model */ = {
 			isa = PBXGroup;
 			children = (
 				CE86DF0A279E6EC600BAE310 /* TransferService.swift */,
 			);
-			path = DataStructure;
+			path = Model;
 			sourceTree = "<group>";
 		};
 		CE86DF0E279E701400BAE310 /* Peripheral */ = {
