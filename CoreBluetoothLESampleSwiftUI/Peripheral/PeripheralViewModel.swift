@@ -6,9 +6,11 @@
 //
 
 import Foundation
+import Combine
 import CoreBluetooth
 
 final class PeripheralViewModel: NSObject, ObservableObject {
+    private var cancellables = Set<AnyCancellable>()
     var peripheralManager: CBPeripheralManager!
     var transferCharacteristic: CBMutableCharacteristic?
     var connectedCentral: CBCentral?
@@ -16,24 +18,36 @@ final class PeripheralViewModel: NSObject, ObservableObject {
     var sendDataIndex: Int = 0
     @Published var textMessage = ""
     
+    override init() {
+        super.init()
+        
+        $textMessage.debounce(for: 1, scheduler: RunLoop.main)
+            .sink(receiveValue: { [weak self] _ in
+                guard let self = self else { return }
+                self.sendAction()
+            }).store(in: &cancellables)
+    }
+    
     func setupPeripheralManager() {
         peripheralManager = CBPeripheralManager(delegate: self, queue: nil, options: [CBPeripheralManagerOptionShowPowerAlertKey: true])
     }
     
     func deinitPeripheralManager() {
-        peripheralManager.stopAdvertising()
+        stopAction()
     }
     
-    func sendAction() {
-        peripheralManager.startAdvertising([CBAdvertisementDataServiceUUIDsKey: [TransferService.serviceUUID]])
+    private func sendAction() {
+        // 글씨가 입력되면 보내지는 반응형으로 만들자
+        peripheralManager.startAdvertising([CBAdvertisementDataServiceUUIDsKey: [TransferService.serviceUUID],
+                                               CBAdvertisementDataLocalNameKey: "TESTAPP"])
     }
     
-    func stopAction() {
+    private func stopAction() {
         peripheralManager.stopAdvertising()
     }
     
     // MARK: - Helper Methods
-
+    
     /*
      *  Sends the next amount of data to the connected central
      */
@@ -101,7 +115,7 @@ final class PeripheralViewModel: NSObject, ObservableObject {
                 
                 //Send it
                 let eomSent = peripheralManager.updateValue("EOM".data(using: .utf8)!,
-                                                             for: transferCharacteristic, onSubscribedCentrals: nil)
+                                                            for: transferCharacteristic, onSubscribedCentrals: nil)
                 
                 if eomSent {
                     // It sent; we're all done
@@ -112,16 +126,16 @@ final class PeripheralViewModel: NSObject, ObservableObject {
             }
         }
     }
-
+    
     private func setupPeripheral() {
         
         // Build our service.
         
         // Start with the CBMutableCharacteristic.
         let transferCharacteristic = CBMutableCharacteristic(type: TransferService.characteristicUUID,
-                                                         properties: [.notify, .writeWithoutResponse],
-                                                         value: nil,
-                                                         permissions: [.readable, .writeable])
+                                                             properties: [.notify, .writeWithoutResponse],
+                                                             value: nil,
+                                                             permissions: [.readable, .writeable])
         
         // Create a service from the characteristic.
         let transferService = CBMutableService(type: TransferService.serviceUUID, primary: true)
@@ -134,13 +148,13 @@ final class PeripheralViewModel: NSObject, ObservableObject {
         
         // Save the characteristic for later.
         self.transferCharacteristic = transferCharacteristic
-
+        
     }
 }
 
 extension PeripheralViewModel: CBPeripheralManagerDelegate {
     // implementations of the CBPeripheralManagerDelegate methods
-
+    
     /*
      *  Required protocol method.  A full app should take care of all the possible states,
      *  but we're just waiting for to know when the CBPeripheralManager is ready
@@ -182,7 +196,7 @@ extension PeripheralViewModel: CBPeripheralManagerDelegate {
             return
         }
     }
-
+    
     /*
      *  Catch when someone subscribes to our characteristic, then start sending them data
      */
@@ -227,8 +241,8 @@ extension PeripheralViewModel: CBPeripheralManagerDelegate {
     func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveWrite requests: [CBATTRequest]) {
         for aRequest in requests {
             guard let requestValue = aRequest.value,
-                let stringFromData = String(data: requestValue, encoding: .utf8) else {
-                    continue
+                  let stringFromData = String(data: requestValue, encoding: .utf8) else {
+                continue
             }
             
             print("Received write request of \(requestValue.count) bytes: \(stringFromData)")
