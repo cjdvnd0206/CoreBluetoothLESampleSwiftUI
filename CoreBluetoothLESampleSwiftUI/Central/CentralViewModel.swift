@@ -14,7 +14,7 @@ final class CentralViewModel: NSObject, ObservableObject {
     var transferCharacteristic: CBCharacteristic?
     var writeIterationsComplete = 0
     var connectionIterationsComplete = 0
-    let defaultIterations = 5     // change this value based on test usecase
+    var defaultIterations = 500     // change this value based on test usecase
     var data = Data()
     @Published var textMessage = ""
     
@@ -24,6 +24,7 @@ final class CentralViewModel: NSObject, ObservableObject {
     
     func deinitCentralManager() {
         centralManager.stopScan()
+        defaultIterations = 0
         print("Scanning stopped")
 
         data.removeAll(keepingCapacity: false)
@@ -87,18 +88,18 @@ final class CentralViewModel: NSObject, ObservableObject {
         // check to see if number of iterations completed and peripheral can accept more data
         while writeIterationsComplete < defaultIterations && discoveredPeripheral.canSendWriteWithoutResponse {
                     
-            let mtu = discoveredPeripheral.maximumWriteValueLength (for: .withoutResponse)
-            var rawPacket = [UInt8]()
-            
-            let bytesToCopy: size_t = min(mtu, data.count)
-            data.copyBytes(to: &rawPacket, count: bytesToCopy)
-            let packetData = Data(bytes: &rawPacket, count: bytesToCopy)
-            
-            if let stringFromData = String(data: packetData, encoding: .utf8) {
-                print("Writing \(bytesToCopy) bytes: \(String(describing: stringFromData))")
-            }
-            
-            discoveredPeripheral.writeValue(packetData, for: transferCharacteristic, type: .withoutResponse)
+//            let mtu = discoveredPeripheral.maximumWriteValueLength (for: .withoutResponse)
+//            var rawPacket = [UInt8]()
+//
+//            let bytesToCopy: size_t = min(mtu, data.count)
+//            data.copyBytes(to: &rawPacket, count: bytesToCopy)
+//            let packetData = Data(bytes: &rawPacket, count: bytesToCopy)
+//
+//            if let stringFromData = String(data: packetData, encoding: .utf8) {
+//                print("Writing \(bytesToCopy) bytes: \(String(describing: stringFromData))")
+//            }
+//
+//            discoveredPeripheral.writeValue(packetData, for: transferCharacteristic, type: .withoutResponse)
             
             writeIterationsComplete += 1
             
@@ -313,7 +314,7 @@ extension CentralViewModel: CBPeripheralDelegate {
             textMessage = String(data: data, encoding: .utf8) ?? ""
             
             // Write test data
-//            writeData()
+            writeData()
         } else {
             // Otherwise, just append the data to what we have previously received.
             data.append(characteristicData)
